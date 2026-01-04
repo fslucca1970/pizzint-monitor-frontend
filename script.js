@@ -1,5 +1,5 @@
 // ⚠️ IMPORTANTE: Substitua pela URL do seu backend no Render
-const BACKEND_URL = 'https://SEU-BACKEND.onrender.com/api/pizzas';
+const BACKEND_URL = "https://pizzint-monitor-backend.onrender.com/api/pizzas";
 
 // Configuração
 const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos
