@@ -1,5 +1,6 @@
 // ⚠️ IMPORTANTE: Substitua pela URL do seu backend no Render
-const BACKEND_URL = "https://pizzint-monitor-backend.onrender.com/api/pizzas";
+const BACKEND_URL = 'https://seu-backend.onrender.com/api/pizzas';
+const HISTORICO_URL = 'https://seu-backend.onrender.com/api/historico';
 
 // Configuração
 const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos
@@ -17,17 +18,76 @@ const PIZZARIAS = {
 };
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('🍕 Pentagon Pizza Index Monitor iniciado');
     inicializarGrafico();
-    buscarDados();
+
+    // Carregar histórico de 7 dias
+    await carregarHistoricoInicial();
+
+    // Buscar dados atuais
+    await buscarDados();
+
+    // Atualizar a cada 5 minutos
     setInterval(buscarDados, UPDATE_INTERVAL);
 });
 
-// Buscar dados do backend
+// ========================================
+// CARREGAR HISTÓRICO INICIAL (7 DIAS)
+// ========================================
+
+async function carregarHistoricoInicial() {
+    try {
+        console.log('📚 Carregando histórico de 7 dias...');
+
+        const response = await fetch(HISTORICO_URL);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const registros = payload.registros || [];
+
+        console.log(`✅ Histórico carregado: ${registros.length} registros`);
+
+        // Converter registros para formato do gráfico
+        historico = registros.map(item => {
+            const indice = calcularIndice(item.pizzarias);
+            const data = new Date(item.timestamp);
+
+            // Formato: "04/01 15:30"
+            const label = data.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return {
+                timestamp: label,
+                indice: parseFloat(indice.toFixed(2)),
+                dados_completos: item
+            };
+        });
+
+        // Atualizar gráfico com histórico
+        atualizarGrafico();
+
+    } catch (erro) {
+        console.error('❌ Erro ao carregar histórico:', erro);
+        document.getElementById('index-status').textContent = 'Erro ao carregar histórico';
+        document.getElementById('index-status').className = 'index-status warning';
+    }
+}
+
+// ========================================
+// BUSCAR DADOS ATUAIS
+// ========================================
+
 async function buscarDados() {
     try {
-        console.log('🔍 Buscando dados...');
+        console.log('🔍 Buscando dados atuais...');
 
         const response = await fetch(BACKEND_URL);
 
@@ -37,10 +97,32 @@ async function buscarDados() {
 
         const data = await response.json();
 
-        console.log('✅ Dados recebidos:', data);
+        console.log('✅ Dados atuais recebidos:', data);
 
         atualizarInterface(data);
-        atualizarHistorico(data);
+
+        // Adicionar novo ponto ao histórico
+        const indice = calcularIndice(data.pizzarias);
+        const agora = new Date();
+        const label = agora.toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        historico.push({
+            timestamp: label,
+            indice: parseFloat(indice.toFixed(2)),
+            dados_completos: data
+        });
+
+        // Manter apenas últimas 288 leituras (5 min × 288 = 1 dia)
+        if (historico.length > 288) {
+            historico.shift();
+        }
+
+        atualizarGrafico();
 
     } catch (erro) {
         console.error('❌ Erro ao buscar dados:', erro);
@@ -48,7 +130,10 @@ async function buscarDados() {
     }
 }
 
-// Atualizar interface
+// ========================================
+// ATUALIZAR INTERFACE
+// ========================================
+
 function atualizarInterface(data) {
     // Atualizar índice principal
     const indice = calcularIndice(data.pizzarias);
@@ -90,37 +175,25 @@ function atualizarInterface(data) {
     });
 }
 
-// Calcular índice agregado
+// ========================================
+// CALCULAR ÍNDICE AGREGADO
+// ========================================
+
 function calcularIndice(pizzarias) {
     const valores = Object.values(pizzarias).map(p => p.valor);
     const soma = valores.reduce((a, b) => a + b, 0);
     return soma / valores.length;
 }
 
-// Atualizar histórico e gráfico
-function atualizarHistorico(data) {
-    const indice = calcularIndice(data.pizzarias);
-    const timestamp = new Date().toLocaleTimeString('pt-BR');
+// ========================================
+// INICIALIZAR GRÁFICO
+// ========================================
 
-    historico.push({
-        timestamp,
-        indice
-    });
-
-    // Manter apenas últimas 50 leituras
-    if (historico.length > 50) {
-        historico.shift();
-    }
-
-    atualizarGrafico();
-}
-
-// Inicializar gráfico
 function inicializarGrafico() {
     const ctx = document.getElementById('main-chart');
 
     if (!ctx) {
-        console.error('Canvas do gráfico não encontrado');
+        console.error('❌ Canvas do gráfico não encontrado');
         return;
     }
 
@@ -135,30 +208,66 @@ function inicializarGrafico() {
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 borderWidth: 3,
                 tension: 0.4,
-                fill: true
+                fill: true,
+                pointRadius: 3,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointHoverRadius: 5
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top'
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 14
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        label: function(context) {
+                            return 'Índice: ' + context.parsed.y.toFixed(2);
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
+                    min: 0,
+                    max: 150,
                     title: {
                         display: true,
-                        text: 'Índice'
+                        text: 'Índice',
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        drawBorder: true,
+                        color: 'rgba(0, 0, 0, 0.1)'
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: 'Horário'
+                        text: 'Horário',
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        display: false
                     }
                 }
             }
@@ -166,7 +275,10 @@ function inicializarGrafico() {
     });
 }
 
-// Atualizar gráfico
+// ========================================
+// ATUALIZAR GRÁFICO
+// ========================================
+
 function atualizarGrafico() {
     if (!mainChart) return;
 
@@ -175,7 +287,10 @@ function atualizarGrafico() {
     mainChart.update();
 }
 
-// Mostrar erro
+// ========================================
+// MOSTRAR ERRO
+// ========================================
+
 function mostrarErro() {
     document.getElementById('pizza-index').textContent = 'ERRO';
     document.getElementById('index-status').textContent = 'Erro ao carregar dados';
