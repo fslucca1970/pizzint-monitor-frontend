@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pentagon Pizza Index Monitor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🍕 Pentagon Pizza Index Monitor</h1>
+            <p class="subtitle">Monitoramento em tempo real das 6 pizzarias do Pentágono</p>
+        </header>
+
+        <!-- Alerta DEFCON -->
+        <div id="defcon-alert" class="defcon-alert hidden">
+            <div class="defcon-content">
+                <span class="defcon-level">DEFCON 2</span>
+                <span class="defcon-text">ANOMALIA DETECTADA</span>
+            </div>
+        </div>
+
+        <!-- Índice Agregado -->
+        <section class="index-section">
+            <div class="index-card">
+                <h2>Pentagon Pizza Index</h2>
+                <div class="index-value" id="pizza-index">--</div>
+                <div class="index-status" id="index-status">Carregando...</div>
+                <div class="last-update" id="last-update">Última atualização: --</div>
+            </div>
+        </section>
+
+        <!-- Grid das 6 Pizzarias -->
+        <section class="pizzarias-grid">
+            <div class="pizzaria-card" id="dominos">
+                <h3>Domino's Pizza</h3>
+                <div class="pizzaria-value">--</div>
+                <div class="pizzaria-status">Normal</div>
+            </div>
+
+            <div class="pizzaria-card" id="extreme">
+                <h3>Extreme Pizza</h3>
+                <div class="pizzaria-value">--</div>
+                <div class="pizzaria-status">Normal</div>
+            </div>
+
+            <div class="pizzaria-card" id="district">
+                <h3>District Pizza Palace</h3>
+                <div class="pizzaria-value">--</div>
+                <div class="pizzaria-status">Normal</div>
+            </div>
+
+            <div class="pizzaria-card" id="we_the_pizza">
+                <h3>We, The Pizza</h3>
+                <div class="pizzaria-value">--</div>
+                <div class="pizzaria-status">Normal</div>
+            </div>
+
+            <div class="pizzaria-card" id="pizzero">
+                <h3>Pizzero Pizza</h3>
+                <div class="pizzaria-value">--</div>
+                <div class="pizzaria-status">Normal</div>
+            </div>
+
+            <div class="pizzaria-card" id="papa_johns">
+                <h3>Papa Johns Pizza</h3>
+                <div class="pizzaria-value">--</div>
+                <div class="pizzaria-status">Normal</div>
+            </div>
+        </section>
+
+        <!-- Gráfico Principal -->
+        <section class="chart-section">
+            <h2>Histórico do Pentagon Pizza Index</h2>
+            <canvas id="main-chart"></canvas>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Atualização
+
