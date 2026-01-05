@@ -47,8 +47,11 @@ async function carregarDados() {
         document.getElementById("status-geral").innerText = "ONLINE";
         document.getElementById("status-geral").style.color = "#2e7d32";
 
-        document.getElementById("atualizacao").innerText = 
-            new Date(dados.timestamp).toLocaleString("pt-BR");
+  document.getElementById("atualizacao").innerText = 
+    "Hora Local: " + new Date(dados.timestamp).toLocaleString("pt-BR", {
+        timeZone: "America/New_York"
+    });
+
 
         // Limpa mensagem de erro
         document.getElementById("erro-container").innerHTML = "";
